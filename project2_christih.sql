@@ -71,7 +71,7 @@ create or replace procedure Pro_prod_report as
 	ORDER BY ProductId;
 	product_query_result c1%rowtype;
 
-	CURSOR c2 IS SELECT Product.ProductId, ProductName, TotalStock, FirstName, LastName FROM Product
+	CURSOR c2 IS SELECT Product.ProductId, ProductName, TotalStock, FirstName, LastName, PhoneNo FROM Product
 	LEFT JOIN Inventory ON Product.ProductId=Inventory.ProductId
 	LEFT JOIN Supplier ON Product.SupplierId=Supplier.SupplierId
 	WHERE TotalStock = 0
@@ -100,13 +100,13 @@ create or replace procedure Pro_prod_report as
 
 		dbms_output.put_line(' ' || RPAD(count_available, 10) || '| ' || RPAD(count_critical, 9) || '| ' || count_oos);
 
-		dbms_output.put(CHR(13) || CHR(10)); -- New Line
+		dbms_output.put(CHR(13) || CHR(10)); -- New Line, Out of Stock Product List
 		dbms_output.put_line('Out Of Stock Products');
 		dbms_output.put_line(' Product ID | Product Name             | Supplier Name            | Supplier Phone Number');
-		dbms_output.put_line('----------------------------------------------------------------------------------');
+		dbms_output.put_line('------------------------------------------------------------------------------------------');
 
 		for oos_query_result in c2 loop
-			dbms_output.put_line(' ' || RPAD(oos_query_result.productId, 11) || '| ' || RPAD(oos_query_result.productName, 25) || '| ' || RPAD(oos_query_result.FirstName || ' ' || oos_query_result.LastName, 25) || '| ' || 'phoneNo');
+			dbms_output.put_line(' ' || RPAD(oos_query_result.productId, 11) || '| ' || RPAD(oos_query_result.productName, 25) || '| ' || RPAD(oos_query_result.FirstName || ' ' || oos_query_result.LastName, 25) || '| ' || oos_query_result.PhoneNo);
 		end loop;
 
 		
@@ -114,5 +114,48 @@ create or replace procedure Pro_prod_report as
 	/
 
 begin Pro_prod_report; 
+end;
+/
+
+-- Problem 3
+create or replace procedure Pro_age_categ as
+
+	CURSOR c1 IS SELECT TRUNC(Age-1, -1) AS age_bucket
+	FROM Customer c
+	GROUP BY TRUNC(Age-1, -1)
+	ORDER BY age_bucket;
+	customer_query_result c1%rowtype;
+
+	CURSOR c2(age_in in number) is SELECT Category, COUNT(Category) AS pop
+	FROM OrderItems i
+	INNER JOIN Product p ON p.ProductId=i.ProductId
+	INNER JOIN Orders o ON o.OrderId=i.OrderId
+	INNER JOIN Customer c ON c.CustomerId=o.CustomerId
+	WHERE TRUNC(Age-1, -1) = age_in
+	GROUP BY Category
+	ORDER BY pop DESC
+	FETCH FIRST 1 row ONLY;
+	item_query_result c2%rowtype;
+	
+	begin
+		dbms_output.put_line('Hit Categories By Age Range');
+		for customer_query_result in c1 loop
+			dbms_output.put(' >' || customer_query_result.age_bucket || ', <=' || (TO_NUMBER(customer_query_result.age_bucket)+10) || '        |');
+		end loop;
+		dbms_output.put_line(CHR(13) || CHR(10) || '-------------------------------------------------------------------------------');
+		dbms_output.put(' ');
+		for customer_query_result in c1 loop
+		    for item_query_result in c2(customer_query_result.age_bucket) loop
+			    dbms_output.put(RPAD(item_query_result.Category, 17) || '| ');
+	    	end loop;
+		end loop;
+		dbms_output.put_line(CHR(13) || CHR(10)); -- New Line
+        
+		
+
+	end Pro_age_categ;
+	/
+
+begin Pro_age_categ; 
 end;
 /

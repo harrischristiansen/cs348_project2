@@ -63,3 +63,4 @@ insert into OrderItems(OrderId,ProductId,Quantity,UnitPrice,Discount) Values (6,
 insert into OrderItems(OrderId,ProductId,Quantity,UnitPrice,Discount) Values (7,2,1,10.5,0);
 
 -- Problem 1: Should return 30 days:(1 delayed, 2 shipped), 365 days:(5 delayed, 5 shipped)
+-- Problem 2: Should return (3 avaiable, 2 critical, 2 oos)

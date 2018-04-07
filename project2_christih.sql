@@ -56,7 +56,7 @@ create or replace procedure Pro_order_status as
 	end Pro_order_status;
 	/
 
-begin Pro_order_status; 
+begin Pro_order_status;
 end;
 /
 
@@ -113,7 +113,7 @@ create or replace procedure Pro_prod_report as
 	end Pro_prod_report;
 	/
 
-begin Pro_prod_report; 
+begin Pro_prod_report;
 end;
 /
 
@@ -154,7 +154,7 @@ create or replace procedure Pro_age_categ as
 	end Pro_age_categ;
 	/
 
-begin Pro_age_categ; 
+begin Pro_age_categ;
 end;
 /
 
@@ -192,6 +192,36 @@ create or replace procedure Pro_category_info as
 	end Pro_category_info;
 	/
 
-begin Pro_category_info; 
+begin Pro_category_info;
+end;
+/
+
+-- Problem 5
+create or replace procedure Pro_search_customer(input_id in number) as
+
+	CURSOR c1(customer_id in number) IS SELECT FirstName, LastName, Age, PhoneNo,
+	(select count(*) FROM Orders o WHERE o.CustomerId = c.CustomerId) NUM_ORDERS
+	FROM Customer c
+	WHERE CustomerId = customer_id;
+	customer_query_result c1%rowtype;
+	
+	begin
+		OPEN c1(input_id);
+		FETCH c1 INTO customer_query_result;
+		CLOSE c1;
+		IF customer_query_result.FirstName IS NULL THEN
+			dbms_output.put_line('Customer with id ' || input_id || ' not found.');
+		ELSE
+			dbms_output.put_line('Customer Name: ' || customer_query_result.FirstName || ' ' || customer_query_result.LastName);
+			dbms_output.put_line('Customer Age: ' || customer_query_result.Age);
+			dbms_output.put_line('Customer Phone No: ' || customer_query_result.PhoneNo);
+			dbms_output.put_line('Number of Orders Placed: ' || customer_query_result.NUM_ORDERS);
+		end IF;
+
+	end Pro_search_customer;
+	/
+
+accept x number prompt 'Enter CustomerID:';
+begin Pro_search_customer(&x);
 end;
 /

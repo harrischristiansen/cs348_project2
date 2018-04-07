@@ -64,3 +64,4 @@ insert into OrderItems(OrderId,ProductId,Quantity,UnitPrice,Discount) Values (7,
 
 -- Problem 1: Should return 30 days:(1 delayed, 2 shipped), 365 days:(5 delayed, 5 shipped)
 -- Problem 2: Should return (3 avaiable, 2 critical, 2 oos)
+-- Problem 3: Should return (10:electronics, 20:books, 30:apparel, 40:books)

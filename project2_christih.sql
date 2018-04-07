@@ -126,7 +126,7 @@ create or replace procedure Pro_age_categ as
 	ORDER BY age_bucket;
 	customer_query_result c1%rowtype;
 
-	CURSOR c2(age_in in number) is SELECT Category, COUNT(Category) AS pop
+	CURSOR c2(age_in in number) IS SELECT Category, COUNT(Category) AS pop
 	FROM OrderItems i
 	INNER JOIN Product p ON p.ProductId=i.ProductId
 	INNER JOIN Orders o ON o.OrderId=i.OrderId
@@ -145,17 +145,53 @@ create or replace procedure Pro_age_categ as
 		dbms_output.put_line(CHR(13) || CHR(10) || '-------------------------------------------------------------------------------');
 		dbms_output.put(' ');
 		for customer_query_result in c1 loop
-		    for item_query_result in c2(customer_query_result.age_bucket) loop
-			    dbms_output.put(RPAD(item_query_result.Category, 17) || '| ');
-	    	end loop;
+			for item_query_result in c2(customer_query_result.age_bucket) loop
+				dbms_output.put(RPAD(item_query_result.Category, 17) || '| ');
+			end loop;
 		end loop;
 		dbms_output.put_line(CHR(13) || CHR(10)); -- New Line
-        
-		
 
 	end Pro_age_categ;
 	/
 
 begin Pro_age_categ; 
+end;
+/
+
+-- Problem 4
+create or replace procedure Pro_category_info as
+
+	CURSOR c1 IS SELECT Category,
+	(SELECT sum(Quantity) FROM OrderItems i INNER JOIN Product p2 on p2.ProductId=i.ProductId WHERE p2.Category = p.Category) TOTAL_UNITS
+	FROM Product p
+	GROUP BY Category
+	ORDER BY TOTAL_UNITS DESC;
+	product_query_result c1%rowtype;
+
+	CURSOR c2(category_in in Product.Category%TYPE) IS SELECT
+	sum(Quantity) as TOTAL_UNITS,
+	to_char(COALESCE(avg(cast (UnitPrice as decimal(10,2))),0), 'FM$999990.00') as AVG_PRICE, -- TODO: Does not account for Quantity
+	to_char(COALESCE(avg(cast (Discount as decimal(10,2))),0), 'FM$999990.00') as AVG_DISCOUNT
+	FROM OrderItems i
+	INNER JOIN Product p on p.ProductId=i.ProductId
+	WHERE p.Category = category_in;
+	item_query_result c2%rowtype;
+	
+	begin
+		dbms_output.put_line('Category Report');
+		dbms_output.put_line(' Category           | TOTAL_UNITS      | AVG_PRICE        | AVG_DISCOUNT');
+		dbms_output.put_line('-------------------------------------------------------------------------');
+		
+		for product_query_result in c1 loop
+			OPEN c2(product_query_result.Category);
+			FETCH c2 INTO item_query_result;
+			CLOSE c2;
+			dbms_output.put_line(' ' || RPAD(product_query_result.Category, 12) || '       | ' || RPAD(item_query_result.TOTAL_UNITS, 10) || '       | ' || RPAD(item_query_result.AVG_PRICE, 10) || '       | ' || item_query_result.AVG_DISCOUNT);
+		end loop;
+
+	end Pro_category_info;
+	/
+
+begin Pro_category_info; 
 end;
 /

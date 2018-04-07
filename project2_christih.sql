@@ -179,14 +179,14 @@ create or replace procedure Pro_category_info as
 	
 	begin
 		dbms_output.put_line('Category Report');
-		dbms_output.put_line(' Category           | TOTAL_UNITS      | AVG_PRICE        | AVG_DISCOUNT');
+		dbms_output.put_line(' Category           | TOTAL_UNITS   | AVG_PRICE        | AVG_DISCOUNT');
 		dbms_output.put_line('-------------------------------------------------------------------------');
 		
 		for product_query_result in c1 loop
 			OPEN c2(product_query_result.Category);
 			FETCH c2 INTO item_query_result;
 			CLOSE c2;
-			dbms_output.put_line(' ' || RPAD(product_query_result.Category, 12) || '       | ' || RPAD(item_query_result.TOTAL_UNITS, 10) || '       | ' || RPAD(item_query_result.AVG_PRICE, 10) || '       | ' || item_query_result.AVG_DISCOUNT);
+			dbms_output.put_line(' ' || RPAD(product_query_result.Category, 19) || '| ' || RPAD(item_query_result.TOTAL_UNITS, 14) || '| ' || RPAD(item_query_result.AVG_PRICE, 17) || '| ' || item_query_result.AVG_DISCOUNT);
 		end loop;
 
 	end Pro_category_info;
@@ -200,7 +200,7 @@ end;
 create or replace procedure Pro_search_customer(input_id in number) as
 
 	CURSOR c1(customer_id in number) IS SELECT FirstName, LastName, Age, PhoneNo,
-	(select count(*) FROM Orders o WHERE o.CustomerId = c.CustomerId) NUM_ORDERS
+	(select count(OrderId) FROM Orders o WHERE o.CustomerId = c.CustomerId) NUM_ORDERS
 	FROM Customer c
 	WHERE CustomerId = customer_id;
 	customer_query_result c1%rowtype;
@@ -221,7 +221,50 @@ create or replace procedure Pro_search_customer(input_id in number) as
 	end Pro_search_customer;
 	/
 
-accept x number prompt 'Enter CustomerID:';
+accept x number prompt 'Enter Customer ID:';
 begin Pro_search_customer(&x);
+end;
+/
+
+-- Problem 6
+create or replace procedure Pro_search_supplier(input_id in number) as
+
+	CURSOR c1(supplier_id in number) IS SELECT SupplierId, FirstName, LastName, Address, PhoneNo,
+	(select count(ProductId) FROM Product p WHERE p.SupplierId = s.SupplierId) NUM_PRODUCTS
+	FROM Supplier s
+	WHERE SupplierId = supplier_id;
+	supplier_query_result c1%rowtype;
+
+	CURSOR c2(supplier_id in number) IS SELECT ProductId, ProductName
+	FROM Product p
+	WHERE SupplierId = supplier_id;
+	product_query_result c2%rowtype;
+	
+	begin
+		OPEN c1(input_id);
+		FETCH c1 INTO supplier_query_result;
+		CLOSE c1;
+		IF supplier_query_result.FirstName IS NULL THEN
+			dbms_output.put_line('Supplier with id ' || input_id || ' not found.');
+		ELSE
+			dbms_output.put_line('Supplier Name: ' || supplier_query_result.FirstName || ' ' || supplier_query_result.LastName);
+			dbms_output.put_line('Supplier Phone No: ' || supplier_query_result.PhoneNo);
+			dbms_output.put_line('Supplier Address: ' || supplier_query_result.Address);
+			dbms_output.put_line('Number of Products Supplied: ' || supplier_query_result.NUM_PRODUCTS);
+
+			-- Print Products
+			dbms_output.put_line(CHR(13) || CHR(10) || 'Products');
+			dbms_output.put_line(' Product ID  | Product Name');
+			dbms_output.put_line('---------------------------------');
+			for product_query_result in c2(supplier_query_result.supplierId) loop
+				dbms_output.put_line(' ' || RPAD(product_query_result.ProductId, 12) || '| ' || product_query_result.ProductName);
+			end loop;
+		end IF;
+
+	end Pro_search_supplier;
+	/
+
+accept y number prompt 'Enter Supplier ID:';
+begin Pro_search_supplier(&y);
 end;
 /
